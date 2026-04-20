@@ -5,10 +5,6 @@ const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 export const analyzeImage = async (base64Image: string, mimeType: string, isAdvanced: boolean = false, isCustomTrained: boolean = false): Promise<AnalysisResult> => {
 
-  if (!process.env.GEMINI_API_KEY) {
-    throw new Error("API Key is missing. You must add GEMINI_API_KEY exactly as mapped in Vercel's Environment Variables, and then redeploy/rebuild your Vercel project.");
-  }
-
   let systemInstruction = "";
   let promptText = "";
 
@@ -53,11 +49,16 @@ export const analyzeImage = async (base64Image: string, mimeType: string, isAdva
   }
 
   try {
+    let safeMimeType = mimeType;
+    if (!safeMimeType || safeMimeType.trim() === '' || !safeMimeType.startsWith('image/')) {
+      safeMimeType = 'image/jpeg';
+    }
+
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-pro',
       contents: {
         parts: [
-          { inlineData: { mimeType: mimeType, data: base64Image } },
+          { inlineData: { mimeType: safeMimeType, data: base64Image } },
           { text: promptText }
         ]
       },
@@ -135,6 +136,11 @@ export const analyzeImage = async (base64Image: string, mimeType: string, isAdva
 };
 
 export const createForensicChat = (base64Image: string, mimeType: string, result: AnalysisResult): Chat => {
+  let safeMimeType = mimeType;
+  if (!safeMimeType || safeMimeType.trim() === '' || !safeMimeType.startsWith('image/')) {
+    safeMimeType = 'image/jpeg';
+  }
+
   const systemInstruction = `
     You are 'Neuro-Spectral ResNet-X', the proprietary AI model that just analyzed the user's image.
     
@@ -157,7 +163,7 @@ export const createForensicChat = (base64Image: string, mimeType: string, result
       {
         role: 'user',
         parts: [
-          { inlineData: { mimeType: mimeType, data: base64Image } },
+          { inlineData: { mimeType: safeMimeType, data: base64Image } },
           { text: "This is the image you analyzed. I am ready to ask questions." }
         ]
       },

@@ -92,12 +92,23 @@ const App: React.FC = () => {
     try {
       const base64Data = imageSrc.split(',')[1];
       
+      // Ensure we extract the EXACT mime type from the data URL, or hard fallback to jpeg
+      let extractedMimeType = mimeType;
+      const match = imageSrc.match(/^data:(.*?);base64/);
+      if (match && match[1]) {
+        extractedMimeType = match[1];
+      }
+      
+      if (!extractedMimeType || extractedMimeType.trim() === '') {
+        extractedMimeType = 'image/jpeg';
+      }
+      
       // Step 1: Analyze
-      const result = await analyzeImage(base64Data, mimeType, isAdvanced, isModelTrained);
+      const result = await analyzeImage(base64Data, extractedMimeType, isAdvanced, isModelTrained);
       setAnalysisResult(result);
       
       // Step 2: Initialize Chat with Context
-      const chat = createForensicChat(base64Data, mimeType, result);
+      const chat = createForensicChat(base64Data, extractedMimeType, result);
       setChatSession(chat);
 
       setAppState(AppState.RESULT);
