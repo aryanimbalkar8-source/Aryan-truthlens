@@ -40,7 +40,18 @@ const App: React.FC = () => {
     reader.onload = (event) => {
       const result = event.target?.result as string;
       setImageSrc(result);
-      setMimeType(file.type);
+      
+      let finalMimeType = file.type;
+      if (!finalMimeType || finalMimeType.trim() === '') {
+        const ext = file.name.split('.').pop()?.toLowerCase();
+        if (ext === 'png') finalMimeType = 'image/png';
+        else if (ext === 'webp') finalMimeType = 'image/webp';
+        else if (ext === 'heic') finalMimeType = 'image/heic';
+        else if (ext === 'heif') finalMimeType = 'image/heif';
+        else finalMimeType = 'image/jpeg';
+      }
+      
+      setMimeType(finalMimeType);
       setAppState(AppState.PREVIEW);
       setErrorMsg('');
       setAnalysisResult(null);

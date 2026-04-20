@@ -5,6 +5,10 @@ const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 export const analyzeImage = async (base64Image: string, mimeType: string, isAdvanced: boolean = false, isCustomTrained: boolean = false): Promise<AnalysisResult> => {
 
+  if (!process.env.GEMINI_API_KEY) {
+    throw new Error("API Key is missing. You must add GEMINI_API_KEY exactly as mapped in Vercel's Environment Variables, and then redeploy/rebuild your Vercel project.");
+  }
+
   let systemInstruction = "";
   let promptText = "";
 
@@ -50,7 +54,7 @@ export const analyzeImage = async (base64Image: string, mimeType: string, isAdva
 
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-3-pro-preview',
+      model: 'gemini-2.5-pro',
       contents: {
         parts: [
           { inlineData: { mimeType: mimeType, data: base64Image } },
@@ -124,9 +128,9 @@ export const analyzeImage = async (base64Image: string, mimeType: string, isAdva
     
     return JSON.parse(resultText) as AnalysisResult;
 
-  } catch (error) {
+  } catch (error: any) {
     console.error("Analysis Failed", error);
-    throw new Error("Failed to analyze image. Please try again.");
+    throw new Error(error.message || "Failed to analyze image. Please try again.");
   }
 };
 
@@ -145,7 +149,7 @@ export const createForensicChat = (base64Image: string, mimeType: string, result
   `;
 
   const chat = ai.chats.create({
-    model: 'gemini-3-flash-preview',
+    model: 'gemini-2.5-flash',
     config: {
       systemInstruction: systemInstruction,
     },
